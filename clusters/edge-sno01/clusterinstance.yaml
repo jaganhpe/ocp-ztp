@@ -14,6 +14,7 @@ spec:
     name: assisted-deployment-pull-secret
 
   clusterImageSetNameRef: img4.22.11-x86-64-appsub
+
   templateRefs:
     - name: ai-cluster-templates-v1
       namespace: open-cluster-management
@@ -33,12 +34,6 @@ spec:
 
   serviceNetwork:
     - cidr: 172.30.0.0/16
-
-  apiVIPs:
-    - 20.20.20.42
-
-  ingressVIPs:
-    - 20.20.20.42
 
   nodes:
     - hostName: edge-sno01.ocp.local
