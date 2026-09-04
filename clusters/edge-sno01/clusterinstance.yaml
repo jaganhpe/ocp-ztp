@@ -1,0 +1,85 @@
+apiVersion: siteconfig.open-cluster-management.io/v1alpha1
+kind: ClusterInstance
+
+metadata:
+  name: edge-sno01
+  namespace: edge-sno01
+
+spec:
+  clusterName: edge-sno01
+
+  baseDomain: ocp.local
+
+  pullSecretRef:
+    name: assisted-deployment-pull-secret
+
+  clusterImageSetNameRef: img4.22.11-x86-64-appsub
+
+  sshPublicKey: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCf/1sWrqln0HlWvfYTBy73QxweDbzf9re1dnGOsocFFyB4D9/g63GZeCjpkD2ifnCxpLEzbRt2diwfJ8DpWg1i0zSpT5tAzq+r+LhL+kUDzoGhY1gf3MHJXj1QKTpn+rBzxlN7mtNrSEcBgsAaAYgEtCLjPwZHWtjrTqKH9eXQmtZTQLxD/cVXPSSRAAdcWepOa5b2fF5Cre6hHi3hnNRyrXu4dttZ2f6kndwlXzpsfcrEkvs4YpLZQybOHndm+3sDBmwLfWxAbUdQyQJFYMgVjIIYiqkvV6aB17dAUhiKW4PUiHLMYRNfT5mDktKYa/gQgQxk55wv/0ySC8Wy7JfvfNivoUKBaTDkvn1W5whyPWPRZCjF0QkU+pq6gQ5pD0Ct9otd6CPVHQZFfPtBP6GkLf7a0KgwQBNuORsqTrbqucGuhMS2PvIF/EUoQ76Lo3Y4nQ3/KgQhuzfaTJOXyqnd/MDNMv+j3cJ2sKvVnDJptEmPU09OXewaacEv6RRAbUc= root@hvm1"
+
+  clusterType: SNO
+
+  networkType: OVNKubernetes
+
+  machineNetwork:
+    - cidr: 20.20.20.0/24
+
+  clusterNetwork:
+    - cidr: 10.128.0.0/14
+      hostPrefix: 23
+
+  serviceNetwork:
+    - cidr: 172.30.0.0/16
+
+  apiVIPs:
+    - 20.20.20.42
+
+  ingressVIPs:
+    - 20.20.20.42
+
+  nodes:
+    - hostName: edge-sno01.ocp.local
+
+      role: master
+
+      bmcAddress: "redfish-virtualmedia+https://172.28.0.13/redfish/v1/Systems/1"
+
+      bmcCredentialsName:
+        name: edge-sno01-bmc-secret
+
+      bootMACAddress: "8c:84:74:0d:be:90"
+
+      bootMode: UEFI
+
+      nodeNetwork:
+        interfaces:
+          - name: eno1
+            macAddress: "8c:84:74:0d:be:90"
+
+        config:
+          interfaces:
+            - name: eno1
+              type: ethernet
+              state: up
+              macAddress: "8c:84:74:0d:be:90"
+
+              ipv4:
+                enabled: true
+                dhcp: false
+                address:
+                  - ip: 20.20.20.42
+                    prefix-length: 24
+
+              ipv6:
+                enabled: false
+
+        routes:
+          config:
+            - destination: 0.0.0.0/0
+              next-hop-address: 20.20.20.10
+              next-hop-interface: eno1
+
+        dns-resolver:
+          config:
+            server:
+              - 20.20.20.1
