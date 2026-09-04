@@ -68,7 +68,6 @@ spec:
             - name: eno1
               type: ethernet
               state: up
-              macAddress: "8c:84:74:0d:be:90"
 
               ipv4:
                 enabled: true
