@@ -14,6 +14,9 @@ spec:
     name: assisted-deployment-pull-secret
 
   clusterImageSetNameRef: img4.22.11-x86-64-appsub
+  templateRefs:
+    - name: ai-cluster-templates-v1
+      namespace: open-cluster-management
 
   sshPublicKey: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCf/1sWrqln0HlWvfYTBy73QxweDbzf9re1dnGOsocFFyB4D9/g63GZeCjpkD2ifnCxpLEzbRt2diwfJ8DpWg1i0zSpT5tAzq+r+LhL+kUDzoGhY1gf3MHJXj1QKTpn+rBzxlN7mtNrSEcBgsAaAYgEtCLjPwZHWtjrTqKH9eXQmtZTQLxD/cVXPSSRAAdcWepOa5b2fF5Cre6hHi3hnNRyrXu4dttZ2f6kndwlXzpsfcrEkvs4YpLZQybOHndm+3sDBmwLfWxAbUdQyQJFYMgVjIIYiqkvV6aB17dAUhiKW4PUiHLMYRNfT5mDktKYa/gQgQxk55wv/0ySC8Wy7JfvfNivoUKBaTDkvn1W5whyPWPRZCjF0QkU+pq6gQ5pD0Ct9otd6CPVHQZFfPtBP6GkLf7a0KgwQBNuORsqTrbqucGuhMS2PvIF/EUoQ76Lo3Y4nQ3/KgQhuzfaTJOXyqnd/MDNMv+j3cJ2sKvVnDJptEmPU09OXewaacEv6RRAbUc= root@hvm1"
 
@@ -41,6 +44,10 @@ spec:
     - hostName: edge-sno01.ocp.local
 
       role: master
+
+      templateRefs:
+        - name: ai-node-templates-v1
+          namespace: open-cluster-management
 
       bmcAddress: "redfish-virtualmedia+https://172.28.0.13/redfish/v1/Systems/1"
 
