@@ -25,7 +25,7 @@ spec:
 
   networkType: OVNKubernetes
 
-   additionalNTPSources:
+  additionalNTPSources:
     - 16.110.135.123
 
   machineNetwork:
