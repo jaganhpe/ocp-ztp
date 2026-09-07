@@ -77,10 +77,10 @@ spec:
         routes:
           config:
             - destination: 0.0.0.0/0
-              next-hop-address: 20.20.20.10
+              next-hop-address: 20.20.20.2
               next-hop-interface: eno1
 
         dns-resolver:
           config:
             server:
-              - 20.20.20.1
+              - 20.20.20.2
