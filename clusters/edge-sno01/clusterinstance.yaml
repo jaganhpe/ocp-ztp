@@ -26,7 +26,7 @@ spec:
   networkType: OVNKubernetes
 
   machineNetwork:
-    - cidr: 20.20.20.0/24
+    - cidr: 172.28.0.0/24
 
   clusterNetwork:
     - cidr: 10.128.0.0/14
@@ -49,14 +49,14 @@ spec:
       bmcCredentialsName:
         name: edge-sno01-bmc-secret
 
-      bootMACAddress: "8c:84:74:0d:be:90"
+      bootMACAddress: "e8:eb:d3:ee:70:a4"
 
       bootMode: UEFI
 
       nodeNetwork:
         interfaces:
           - name: eno1
-            macAddress: "8c:84:74:0d:be:90"
+            macAddress: "e8:eb:d3:ee:70:a4"
 
         config:
           interfaces:
@@ -68,7 +68,7 @@ spec:
                 enabled: true
                 dhcp: false
                 address:
-                  - ip: 20.20.20.42
+                  - ip: 172.28.0.42
                     prefix-length: 24
 
               ipv6:
@@ -77,10 +77,10 @@ spec:
         routes:
           config:
             - destination: 0.0.0.0/0
-              next-hop-address: 20.20.20.2
+              next-hop-address: 172.28.0.1
               next-hop-interface: eno1
 
         dns-resolver:
           config:
             server:
-              - 20.20.20.2
+              - 172.28.0.2
