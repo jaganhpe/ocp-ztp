@@ -88,5 +88,5 @@ spec:
           ntp:
             enabled: true
             servers:
-              - 172.28.0.2
+              - 16.110.135.123
 
