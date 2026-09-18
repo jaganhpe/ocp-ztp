@@ -1,0 +1,104 @@
+apiVersion: siteconfig.open-cluster-management.io/v1alpha1
+kind: ClusterInstance
+metadata:
+  name: edge-sno02
+  namespace: edge-sno02
+
+spec:
+  clusterName: edge-sno02
+
+  baseDomain: ocp.local
+
+  pullSecretRef:
+    name: assisted-deployment-pull-secret
+
+  clusterImageSetNameRef: img4.22.11-x86-64-appsub
+
+  templateRefs:
+    - name: ai-cluster-templates-v1
+      namespace: open-cluster-management
+
+  sshPublicKey: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEPFTI/XcJpZCzE4XTLM+8/9rYrTVF1bQ7kYqiK1+r4h root@hvm1"
+
+  clusterType: SNO
+
+  networkType: OVNKubernetes
+
+
+  machineNetwork:
+    - cidr: 172.28.0.0/24
+
+  clusterNetwork:
+    - cidr: 10.128.0.0/14
+      hostPrefix: 23
+
+  serviceNetwork:
+    - cidr: 172.30.0.0/16
+
+  nodes:
+    - hostName: edge-sno02.ocp.local
+
+      role: master
+
+      templateRefs:
+        - name: ai-node-templates-v1
+          namespace: open-cluster-management
+
+      bmcAddress: "redfish-virtualmedia+https://172.28.0.14/redfish/v1/Systems/1"
+
+      bmcCredentialsName:
+        name: edge-sno02-bmc-secret
+
+      bootMACAddress: "a0:88:c2:56:51:18"
+
+      bootMode: UEFI
+
+      nodeNetwork:
+        interfaces:
+          - name: eno1
+            macAddress: "a0:88:c2:56:51:18"
+          - name: eno2
+            macAddress: "a0:88:c2:56:51:19"
+
+        config:
+          interfaces:
+            - name: bond0
+              type: bond
+              state: up
+              link-aggregation:
+                mode: active-backup
+                options:
+                  miimon: "140"
+                port:
+                  - eno1
+                  - eno2
+
+              ipv4:
+                enabled: true
+                dhcp: false
+                address:
+                  - ip: 172.28.0.43
+                    prefix-length: 24
+
+              ipv6:
+                enabled: false
+
+            - name: eno1
+              type: ethernet
+              state: up
+
+            - name: eno2
+              type: ethernet
+              state: up
+
+          routes:
+            config:
+              - destination: 0.0.0.0/0
+                next-hop-address: 172.28.0.1
+                next-hop-interface: eno1
+
+          dns-resolver:
+            config:
+              server:
+                - 172.28.0.2
+
