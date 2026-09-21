@@ -203,6 +203,90 @@ Expected results: `ClusterInstance` `PROVISIONSTATUS` = `Completed`,
 expected OCP version as `Available`, and `policies` show `Compliant` once the
 `ManagedCluster` is labeled per [policies/README.md](policies/README.md).
 
+## Making changes after a cluster starts provisioning
+
+`ClusterInstance.spec` is **immutable once provisioning has started** — an
+admission webhook (`clusterinstances.siteconfig.open-cluster-management.io`)
+rejects any spec edit (network config, `bootMACAddress`, BMC address, etc.)
+with:
+
+```
+admission webhook "clusterinstances.siteconfig.open-cluster-management.io"
+denied the request: spec update not allowed during provisioning or cluster reinstalls
+```
+
+If you find a mistake (wrong MAC, wrong network config, wrong BMC address)
+after committing/pushing and ArgoCD has already created the `ClusterInstance`:
+
+1. Fix the value in `clusters/<cluster-name>/clusterinstance.yaml`, commit, and
+   push as normal — this alone will **not** apply, since the webhook blocks it.
+2. Trigger a reinstall via the dedicated `spec.reinstall` field (this is the
+   only field the webhook allows updating post-provisioning):
+
+   ```sh
+   GEN="<cluster-name>-retry-$(date +%s)"
+   oc patch clusterinstance <cluster-name> -n <cluster-name> --type merge \
+     -p "{\"spec\":{\"reinstall\":{\"generation\":\"$GEN\",\"preservationMode\":\"None\"}}}"
+   ```
+
+   `generation` just needs to be a new, unique string each time (a timestamp
+   works). `preservationMode: None` wipes all Secrets/ConfigMaps in the
+   cluster's namespace as part of the reinstall — **this deletes your pull
+   secret and BMC secret too**, so you must recreate them afterward (see
+   [Adding a new edge cluster](#adding-a-new-edge-cluster) step 3).
+3. Confirm ArgoCD has synced and the corrected value took effect:
+
+   ```sh
+   oc get clusterinstance <cluster-name> -n <cluster-name> -o jsonpath='{.spec.nodes[0].bootMACAddress}'; echo
+   ```
+4. Recreate the pull secret and BMC secret (wiped in step 2), then watch
+   provisioning restart:
+
+   ```sh
+   oc get baremetalhost -n <cluster-name> -w
+   ```
+
+To avoid losing secrets on future reinstalls, label them and use
+`preservationMode: All` or `ClusterIdentity` instead of `None` — see
+`oc explain clusterinstance.spec.reinstall.preservationMode` for the exact
+label keys your SiteConfig operator version expects.
+
+If a cluster is stuck (e.g. `BareMetalHost` stuck `inspecting` with
+`InspectionError: Timeout reached... check if the ramdisk...is running`),
+that's usually a boot/network issue, not a spec problem — verify the BMC
+`PowerState`/`VirtualMedia` status directly via redfish and confirm
+`bootMACAddress` matches the host's actual boot NIC before assuming it's a
+software bug.
+
+## Syncing ArgoCD after a Git change
+
+All three Applications (`ztp-clusters`, `ztp-policies`, `ztp-provisioning`)
+have `syncPolicy.automated` enabled, so ArgoCD polls Git (default ~3 min) and
+applies changes automatically after `git push` — no action required. To force
+it immediately instead of waiting for the poll:
+
+```sh
+# Hard-refresh (re-pull latest commit) and re-sync a specific Application
+oc patch applications.argoproj.io ztp-clusters -n openshift-gitops \
+  --type merge -p '{"metadata":{"annotations":{"argocd.argoproj.io/refresh":"hard"}}}'
+
+# Repeat for the others as needed
+oc patch applications.argoproj.io ztp-policies -n openshift-gitops \
+  --type merge -p '{"metadata":{"annotations":{"argocd.argoproj.io/refresh":"hard"}}}'
+oc patch applications.argoproj.io ztp-provisioning -n openshift-gitops \
+  --type merge -p '{"metadata":{"annotations":{"argocd.argoproj.io/refresh":"hard"}}}'
+
+# Confirm the sync landed on your latest commit
+oc get applications.argoproj.io -n openshift-gitops \
+  -o custom-columns=NAME:.metadata.name,SYNC:.status.sync.status,REVISION:.status.sync.revision,HEALTH:.status.health.status
+```
+
+If the `argocd` CLI is available on the hub, `argocd app sync <name>` does the
+same thing. Note: **hard refresh alone can trigger a sync attempt that still
+fails** if the change touches an already-provisioning `ClusterInstance` — see
+[Making changes after a cluster starts provisioning](#making-changes-after-a-cluster-starts-provisioning)
+for that case.
+
 ## References
 
 - `OpenShift_ZTP_GitOps_Customer_Deployment_Guide` — Customer Deployment Guide covering
