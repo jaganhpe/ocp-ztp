@@ -140,7 +140,20 @@ oc get applications.argoproj.io -n openshift-gitops
 2. Update `namespace.yaml` and `clusterinstance.yaml` with the new cluster name,
    base domain, network config, and BMC/node details.
 3. Create the pull secret and BMC credentials directly on the hub, in the cluster's
-   namespace (`oc create secret ...`) — never commit plaintext credentials to Git.
+   namespace — never commit plaintext credentials to Git. The secret names must
+   match `pullSecretRef.name` / `bmcCredentialsName.name` in `clusterinstance.yaml`:
+
+   ```sh
+   oc create secret generic <cluster-name>-pull-secret \
+     -n <cluster-name> \
+     --from-file=.dockerconfigjson=/path/to/pull-secret.json \
+     --type=kubernetes.io/dockerconfigjson
+
+   oc create secret generic <cluster-name>-bmc-secret \
+     -n <cluster-name> \
+     --from-literal=username='<bmc-username>' \
+     --from-literal=password='<bmc-password>'
+   ```
 4. Commit and push. ArgoCD auto-syncs and RHACM begins cluster discovery/install.
 5. Label the resulting `ManagedCluster` so Day-2 policies in `policies/` apply to it
    — see [policies/README.md](policies/README.md) (e.g. `clusterType=SNO`).
@@ -160,6 +173,35 @@ oc get applications.argoproj.io -n openshift-gitops
    `clusterType=SNO`) so the `policies/` PolicyGenerator placements bind to it.
 7. Verify: `oc get applications.argoproj.io -n openshift-gitops`,
    `oc get clusterinstances -A`, `oc get policies -A`.
+
+## Post-provisioning verification
+
+Once a cluster's `BareMetalHost` finishes inspecting/provisioning, confirm the
+full install and import chain succeeded, in this order:
+
+```sh
+# 1. Provisioning progressed and completed
+oc get clusterinstances -A
+oc get agentclusterinstall -A
+oc get baremetalhost -n <cluster-name>
+
+# 2. Cluster registered with RHACM as a ManagedCluster
+oc get managedcluster <cluster-name>
+
+# 3. Cluster is reachable and healthy
+oc get secret <cluster-name>-admin-kubeconfig -n <cluster-name> -o jsonpath='{.data.kubeconfig}' | base64 -d > /tmp/<cluster-name>-kubeconfig
+KUBECONFIG=/tmp/<cluster-name>-kubeconfig oc get clusterversion
+KUBECONFIG=/tmp/<cluster-name>-kubeconfig oc get nodes
+
+# 4. Day-2 policies are bound and compliant (after labeling the ManagedCluster)
+oc get policies -A
+oc get placementbinding -n open-cluster-management-policies
+```
+
+Expected results: `ClusterInstance` `PROVISIONSTATUS` = `Completed`,
+`ManagedCluster` `JOINED`/`AVAILABLE` = `True`, `clusterversion` shows the
+expected OCP version as `Available`, and `policies` show `Compliant` once the
+`ManagedCluster` is labeled per [policies/README.md](policies/README.md).
 
 ## References
 

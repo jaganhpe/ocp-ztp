@@ -49,16 +49,16 @@ spec:
       bmcCredentialsName:
         name: edge-sno02-bmc-secret
 
-      bootMACAddress: "a0:88:c2:56:51:18"
+      bootMACAddress: "a0:88:c2:6a:0f:ca"
 
       bootMode: UEFI
 
       nodeNetwork:
         interfaces:
           - name: eno1
-            macAddress: "a0:88:c2:56:51:18"
+            macAddress: "a0:88:c2:6a:0f:ca"
           - name: eno2
-            macAddress: "a0:88:c2:56:51:19"
+            macAddress: "a0:88:c2:6a:0f:cb"
 
         config:
           interfaces:
