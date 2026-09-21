@@ -36,7 +36,11 @@ mkdir -p "${WORKDIR}/out"
 ensure_podman
 
 echo "==> Logging in to registry.redhat.io"
-podman login registry.redhat.io
+read -rp "registry.redhat.io username: " REGISTRY_USERNAME
+read -rsp "registry.redhat.io password: " REGISTRY_PASSWORD
+echo
+podman login registry.redhat.io -u "${REGISTRY_USERNAME}" -p "${REGISTRY_PASSWORD}"
+unset REGISTRY_PASSWORD
 
 echo "==> Extracting ztp-site-generate:${OCP_VERSION}"
 podman run --log-driver=none --rm \
