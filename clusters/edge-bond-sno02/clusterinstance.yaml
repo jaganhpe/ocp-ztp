@@ -95,7 +95,7 @@ spec:
             config:
               - destination: 0.0.0.0/0
                 next-hop-address: 172.28.0.1
-                next-hop-interface: eno1
+                next-hop-interface: bond0
 
           dns-resolver:
             config:
