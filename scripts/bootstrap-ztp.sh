@@ -25,7 +25,13 @@ WORKDIR="${HOME}/ocp-ztp"
 read -rp "OpenShift ztp-site-generate version tag [v4.22]: " OCP_VERSION
 OCP_VERSION="${OCP_VERSION:-v4.22}"
 
-read -rp "Git repo URL for this OCP-ZTP repo (leave blank to skip patching argocd/*.yaml): " GIT_REPO_URL
+DETECTED_GIT_REPO_URL="$(git -C "${REPO_ROOT}" config --get remote.origin.url 2>/dev/null || true)"
+read -rp "Git repo URL for this OCP-ZTP repo [${DETECTED_GIT_REPO_URL:-required}]: " GIT_REPO_URL
+GIT_REPO_URL="${GIT_REPO_URL:-${DETECTED_GIT_REPO_URL}}"
+if [[ -z "${GIT_REPO_URL}" ]]; then
+  echo "Git repo URL is required (couldn't auto-detect a git remote and none was entered)." >&2
+  exit 1
+fi
 
 read -rp "Git branch/targetRevision [main]: " GIT_BRANCH
 GIT_BRANCH="${GIT_BRANCH:-main}"
