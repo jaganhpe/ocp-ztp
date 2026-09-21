@@ -1,0 +1,61 @@
+apiVersion: policy.open-cluster-management.io/v1
+kind: PolicyGenerator
+metadata:
+  name: ztp-policies
+placementBindingDefaults:
+  name: "placementbinding"
+policyDefaults:
+  namespace: open-cluster-management-policies
+  remediationAction: inform
+  complianceType: "musthave"
+  severity: low
+  categories:
+    - "CM Configuration Management"
+  controls:
+    - "CM-2 Baseline Configuration"
+  standards:
+    - "NIST SP 800-53"
+
+policySets:
+  # Applies to every managed cluster imported through this repo's clusters/ ClusterInstances.
+  # Label ManagedClusters with `vendor: OpenShift` (RHACM sets this automatically on import).
+  - name: global
+    description: "Baseline configuration applied to all managed clusters"
+    placement:
+      name: "global-placement"
+      labelSelector:
+        matchExpressions:
+          - key: vendor
+            operator: In
+            values:
+              - OpenShift
+    policies:
+      - configure-chrony
+      - configure-ssh-key
+
+  # Applies only to single-node clusters. Label the ManagedCluster with `clusterType: SNO`
+  # (not set automatically - add it manually, e.g. `oc label managedcluster <name> clusterType=SNO`).
+  - name: sno
+    description: "Policies specific to single-node (SNO) managed clusters"
+    placement:
+      name: "sno-placement"
+      labelSelector:
+        matchExpressions:
+          - key: clusterType
+            operator: In
+            values:
+              - SNO
+    policies: []
+
+policies:
+  - name: configure-chrony
+    description: "Configures chrony/NTP time synchronization"
+    manifests:
+      - path: base-config/policy-chrony.yaml
+    remediationAction: enforce
+
+  - name: configure-ssh-key
+    description: "Configures the authorized SSH key for the core user"
+    manifests:
+      - path: base-config/policy-ssh-key.yaml
+    remediationAction: enforce

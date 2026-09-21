@@ -1,0 +1,108 @@
+apiVersion: siteconfig.open-cluster-management.io/v1alpha1
+kind: ClusterInstance
+
+metadata:
+  name: example-sno
+  namespace: example-sno
+
+spec:
+  clusterName: example-sno
+
+  baseDomain: example.com
+
+  pullSecretRef:
+    name: example-sno-pull-secret
+
+  clusterImageSetNameRef: img4.22.11-x86-64-appsub
+
+  templateRefs:
+    - name: ai-cluster-templates-v1
+      namespace: open-cluster-management
+
+  sshPublicKey: "<ssh-public-key>"
+
+  clusterType: SNO
+
+  networkType: OVNKubernetes
+
+  machineNetwork:
+    - cidr: 192.168.1.0/24
+
+  clusterNetwork:
+    - cidr: 10.128.0.0/14
+      hostPrefix: 23
+
+  serviceNetwork:
+    - cidr: 172.30.0.0/16
+
+  nodes:
+    - hostName: example-sno.example.com
+
+      role: master
+
+      templateRefs:
+        - name: ai-node-templates-v1
+          namespace: open-cluster-management
+
+      bmcAddress: "redfish-virtualmedia+https://<bmc-host>/redfish/v1/Systems/1"
+
+      bmcCredentialsName:
+        name: example-sno-bmc-secret
+
+      # bootMACAddress must match one of the two bonded NICs below (the PXE/boot NIC)
+      bootMACAddress: "AA:BB:CC:DD:EE:F1"
+
+      bootMode: UEFI
+
+      # RAID1 for the install disk isn't a ClusterInstance field — apply it as an
+      # extra MachineConfig manifest (software RAID1 via Ignition storage.raid)
+      # referenced through templateRefs/extraManifestRefs; select the install disk
+      # itself via rootDeviceHints if needed.
+      nodeNetwork:
+        interfaces:
+          - name: eth0
+            macAddress: "AA:BB:CC:DD:EE:F1"
+          - name: eth1
+            macAddress: "AA:BB:CC:DD:EE:F2"
+
+        config:
+          interfaces:
+            - name: bond0
+              type: bond
+              state: up
+              link-aggregation:
+                mode: active-backup
+                options:
+                  miimon: "140"
+                port:
+                  - eth0
+                  - eth1
+
+              ipv4:
+                enabled: true
+                dhcp: false
+                address:
+                  - ip: 192.168.1.10
+                    prefix-length: 24
+
+              ipv6:
+                enabled: false
+
+            - name: eth0
+              type: ethernet
+              state: up
+
+            - name: eth1
+              type: ethernet
+              state: up
+
+          routes:
+            config:
+              - destination: 0.0.0.0/0
+                next-hop-address: 192.168.1.1
+                next-hop-interface: bond0
+
+          dns-resolver:
+            config:
+              server:
+                - 192.168.1.1

@@ -1,0 +1,16 @@
+# Authorized SSH key for the core user on all managed cluster nodes
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfig
+metadata:
+  name: 99-master-ssh-key
+  labels:
+    machineconfiguration.openshift.io/role: master
+spec:
+  config:
+    ignition:
+      version: 3.2.0
+    passwd:
+      users:
+        - name: core
+          sshAuthorizedKeys:
+            - "<ssh-public-key>"

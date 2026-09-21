@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ztp-policies
+  namespace: openshift-gitops
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/jaganhpe/ocp-ztp.git
+    targetRevision: main
+    path: policies
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: open-cluster-management-policies
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

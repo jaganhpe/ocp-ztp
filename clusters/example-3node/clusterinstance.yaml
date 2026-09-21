@@ -1,0 +1,179 @@
+apiVersion: siteconfig.open-cluster-management.io/v1alpha1
+kind: ClusterInstance
+
+metadata:
+  name: example-3node
+  namespace: example-3node
+
+spec:
+  clusterName: example-3node
+
+  baseDomain: example.com
+
+  pullSecretRef:
+    name: example-3node-pull-secret
+
+  clusterImageSetNameRef: img4.22.11-x86-64-appsub
+
+  templateRefs:
+    - name: ai-cluster-templates-v1
+      namespace: open-cluster-management
+
+  sshPublicKey: "<ssh-public-key>"
+
+  # 3-node compact cluster: all 3 nodes are masters and also run workloads (no dedicated workers)
+  clusterType: HighlyAvailable
+
+  networkType: OVNKubernetes
+
+  machineNetwork:
+    - cidr: 192.168.1.0/24
+
+  clusterNetwork:
+    - cidr: 10.128.0.0/14
+      hostPrefix: 23
+
+  serviceNetwork:
+    - cidr: 172.30.0.0/16
+
+  nodes:
+    - hostName: example-3node-1.example.com
+
+      role: master
+
+      templateRefs:
+        - name: ai-node-templates-v1
+          namespace: open-cluster-management
+
+      bmcAddress: "redfish-virtualmedia+https://<bmc-host-1>/redfish/v1/Systems/1"
+
+      bmcCredentialsName:
+        name: example-3node-1-bmc-secret
+
+      bootMACAddress: "AA:BB:CC:DD:E1:01"
+
+      bootMode: UEFI
+
+      nodeNetwork:
+        interfaces:
+          - name: eth0
+            macAddress: "AA:BB:CC:DD:E1:01"
+
+        config:
+          interfaces:
+            - name: eth0
+              type: ethernet
+              state: up
+              ipv4:
+                enabled: true
+                dhcp: false
+                address:
+                  - ip: 192.168.1.11
+                    prefix-length: 24
+              ipv6:
+                enabled: false
+
+          routes:
+            config:
+              - destination: 0.0.0.0/0
+                next-hop-address: 192.168.1.1
+                next-hop-interface: eth0
+
+          dns-resolver:
+            config:
+              server:
+                - 192.168.1.1
+
+    - hostName: example-3node-2.example.com
+
+      role: master
+
+      templateRefs:
+        - name: ai-node-templates-v1
+          namespace: open-cluster-management
+
+      bmcAddress: "redfish-virtualmedia+https://<bmc-host-2>/redfish/v1/Systems/1"
+
+      bmcCredentialsName:
+        name: example-3node-2-bmc-secret
+
+      bootMACAddress: "AA:BB:CC:DD:E2:01"
+
+      bootMode: UEFI
+
+      nodeNetwork:
+        interfaces:
+          - name: eth0
+            macAddress: "AA:BB:CC:DD:E2:01"
+
+        config:
+          interfaces:
+            - name: eth0
+              type: ethernet
+              state: up
+              ipv4:
+                enabled: true
+                dhcp: false
+                address:
+                  - ip: 192.168.1.12
+                    prefix-length: 24
+              ipv6:
+                enabled: false
+
+          routes:
+            config:
+              - destination: 0.0.0.0/0
+                next-hop-address: 192.168.1.1
+                next-hop-interface: eth0
+
+          dns-resolver:
+            config:
+              server:
+                - 192.168.1.1
+
+    - hostName: example-3node-3.example.com
+
+      role: master
+
+      templateRefs:
+        - name: ai-node-templates-v1
+          namespace: open-cluster-management
+
+      bmcAddress: "redfish-virtualmedia+https://<bmc-host-3>/redfish/v1/Systems/1"
+
+      bmcCredentialsName:
+        name: example-3node-3-bmc-secret
+
+      bootMACAddress: "AA:BB:CC:DD:E3:01"
+
+      bootMode: UEFI
+
+      nodeNetwork:
+        interfaces:
+          - name: eth0
+            macAddress: "AA:BB:CC:DD:E3:01"
+
+        config:
+          interfaces:
+            - name: eth0
+              type: ethernet
+              state: up
+              ipv4:
+                enabled: true
+                dhcp: false
+                address:
+                  - ip: 192.168.1.13
+                    prefix-length: 24
+              ipv6:
+                enabled: false
+
+          routes:
+            config:
+              - destination: 0.0.0.0/0
+                next-hop-address: 192.168.1.1
+                next-hop-interface: eth0
+
+          dns-resolver:
+            config:
+              server:
+                - 192.168.1.1
