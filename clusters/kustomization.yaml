@@ -2,7 +2,10 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-  # - example-sno       # template only, not deployed
-  # - example-3node     # template only, not deployed
+  # - example-sno            # template only, not deployed
+  # - example-3node          # template only, not deployed
+  # - example-sno-vlan       # template only, not deployed (bond+VLAN reference)
+  # - example-3node-vlan     # template only, not deployed (bond+VLAN reference)
   - edge-sno01
   - edge-bond-sno02
+  - edge-3node01
