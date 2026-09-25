@@ -1,0 +1,261 @@
+apiVersion: siteconfig.open-cluster-management.io/v1alpha1
+kind: ClusterInstance
+
+metadata:
+  name: example-3node-vlan
+  namespace: example-3node-vlan
+
+spec:
+  clusterName: example-3node-vlan
+
+  baseDomain: example.com
+
+  pullSecretRef:
+    name: example-3node-vlan-pull-secret
+
+  clusterImageSetNameRef: img4.22.11-x86-64-appsub
+
+  templateRefs:
+    - name: ai-cluster-templates-v1
+      namespace: open-cluster-management
+
+  sshPublicKey: "<ssh-public-key>"
+
+  # 3-node compact cluster: all 3 nodes are masters and also run workloads (no dedicated workers)
+  clusterType: HighlyAvailable
+
+  networkType: OVNKubernetes
+
+  # machineNetwork must match the VLAN subnet, since that's where the nodes are reachable
+  machineNetwork:
+    - cidr: 192.168.1.0/24
+
+  clusterNetwork:
+    - cidr: 10.128.0.0/14
+      hostPrefix: 23
+
+  serviceNetwork:
+    - cidr: 172.30.0.0/16
+
+  nodes:
+    - hostName: example-3node-vlan-1.example.com
+
+      role: master
+
+      templateRefs:
+        - name: ai-node-templates-v1
+          namespace: open-cluster-management
+
+      bmcAddress: "redfish-virtualmedia+https://<bmc-host-1>/redfish/v1/Systems/1"
+
+      bmcCredentialsName:
+        name: example-3node-vlan-1-bmc-secret
+
+      bootMACAddress: "AA:BB:CC:DD:E1:01"
+
+      bootMode: UEFI
+
+      # Reference template: tagged VLAN over a bond (vs. example-3node's untagged single NIC)
+      nodeNetwork:
+        interfaces:
+          - name: eth0
+            macAddress: "AA:BB:CC:DD:E1:01"
+          - name: eth1
+            macAddress: "AA:BB:CC:DD:E1:02"
+
+        config:
+          interfaces:
+            - name: bond0
+              type: bond
+              state: up
+              link-aggregation:
+                mode: active-backup
+                options:
+                  miimon: "140"
+                port:
+                  - eth0
+                  - eth1
+              # no IP here — bond0 is just the L2 trunk carrying the VLAN
+
+            - name: eth0
+              type: ethernet
+              state: up
+
+            - name: eth1
+              type: ethernet
+              state: up
+
+            # VLAN id 100 is a placeholder — change per site
+            - name: bond0.100
+              type: vlan
+              state: up
+              vlan:
+                base-iface: bond0
+                id: 100
+
+              ipv4:
+                enabled: true
+                dhcp: false
+                address:
+                  - ip: 192.168.1.11
+                    prefix-length: 24
+
+              ipv6:
+                enabled: false
+
+          routes:
+            config:
+              - destination: 0.0.0.0/0
+                next-hop-address: 192.168.1.1
+                next-hop-interface: bond0.100
+
+          dns-resolver:
+            config:
+              server:
+                - 192.168.1.1
+
+    - hostName: example-3node-vlan-2.example.com
+
+      role: master
+
+      templateRefs:
+        - name: ai-node-templates-v1
+          namespace: open-cluster-management
+
+      bmcAddress: "redfish-virtualmedia+https://<bmc-host-2>/redfish/v1/Systems/1"
+
+      bmcCredentialsName:
+        name: example-3node-vlan-2-bmc-secret
+
+      bootMACAddress: "AA:BB:CC:DD:E2:01"
+
+      bootMode: UEFI
+
+      nodeNetwork:
+        interfaces:
+          - name: eth0
+            macAddress: "AA:BB:CC:DD:E2:01"
+          - name: eth1
+            macAddress: "AA:BB:CC:DD:E2:02"
+
+        config:
+          interfaces:
+            - name: bond0
+              type: bond
+              state: up
+              link-aggregation:
+                mode: active-backup
+                options:
+                  miimon: "140"
+                port:
+                  - eth0
+                  - eth1
+
+            - name: eth0
+              type: ethernet
+              state: up
+
+            - name: eth1
+              type: ethernet
+              state: up
+
+            - name: bond0.100
+              type: vlan
+              state: up
+              vlan:
+                base-iface: bond0
+                id: 100
+
+              ipv4:
+                enabled: true
+                dhcp: false
+                address:
+                  - ip: 192.168.1.12
+                    prefix-length: 24
+
+              ipv6:
+                enabled: false
+
+          routes:
+            config:
+              - destination: 0.0.0.0/0
+                next-hop-address: 192.168.1.1
+                next-hop-interface: bond0.100
+
+          dns-resolver:
+            config:
+              server:
+                - 192.168.1.1
+
+    - hostName: example-3node-vlan-3.example.com
+
+      role: master
+
+      templateRefs:
+        - name: ai-node-templates-v1
+          namespace: open-cluster-management
+
+      bmcAddress: "redfish-virtualmedia+https://<bmc-host-3>/redfish/v1/Systems/1"
+
+      bmcCredentialsName:
+        name: example-3node-vlan-3-bmc-secret
+
+      bootMACAddress: "AA:BB:CC:DD:E3:01"
+
+      bootMode: UEFI
+
+      nodeNetwork:
+        interfaces:
+          - name: eth0
+            macAddress: "AA:BB:CC:DD:E3:01"
+          - name: eth1
+            macAddress: "AA:BB:CC:DD:E3:02"
+
+        config:
+          interfaces:
+            - name: bond0
+              type: bond
+              state: up
+              link-aggregation:
+                mode: active-backup
+                options:
+                  miimon: "140"
+                port:
+                  - eth0
+                  - eth1
+
+            - name: eth0
+              type: ethernet
+              state: up
+
+            - name: eth1
+              type: ethernet
+              state: up
+
+            - name: bond0.100
+              type: vlan
+              state: up
+              vlan:
+                base-iface: bond0
+                id: 100
+
+              ipv4:
+                enabled: true
+                dhcp: false
+                address:
+                  - ip: 192.168.1.13
+                    prefix-length: 24
+
+              ipv6:
+                enabled: false
+
+          routes:
+            config:
+              - destination: 0.0.0.0/0
+                next-hop-address: 192.168.1.1
+                next-hop-interface: bond0.100
+
+          dns-resolver:
+            config:
+              server:
+                - 192.168.1.1

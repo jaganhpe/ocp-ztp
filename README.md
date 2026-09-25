@@ -33,6 +33,8 @@ OCP-ZTP/
 │   ├── kustomization.yaml
 │   ├── example-sno/               # Template: single-node (SNO) cluster, 1 node
 │   ├── example-3node/             # Template: 3-node compact/HA cluster, 3 master nodes
+│   ├── example-sno-vlan/          # Template: SNO with tagged VLAN over a bond
+│   ├── example-3node-vlan/        # Template: 3-node with tagged VLAN over a bond
 │   ├── edge-sno01/                # Real SNO cluster (bonded single NIC)
 │   └── edge-bond-sno02/           # Real SNO cluster (bonded dual NIC)
 └── policies/
@@ -52,6 +54,19 @@ OCP-ZTP/
 
 Both use the same `ClusterInstance` API and `templateRefs`; the only differences
 are `clusterType` and the number/content of `nodes` entries.
+
+### Bonded NIC vs. bonded NIC + VLAN
+
+`example-sno`/`example-3node` bond two NICs (`eth0`/`eth1`) into `bond0` and put
+the node's IP address directly on `bond0` — use this when the node network is
+an untagged/native VLAN on the switch port.
+
+`example-sno-vlan`/`example-3node-vlan` show the same bond, but with a tagged
+VLAN on top: `bond0` carries no IP (it's just the L2 trunk), and a
+`bond0.<vlan-id>` interface (`type: vlan`) holds the IP address and default
+route instead. Use this variant when the node network is on a tagged VLAN.
+Copy whichever variant matches your switch configuration, then update the
+VLAN ID, MACs, IPs, and bmc/pull-secret names for your site.
 
 ## Prerequisites (hub cluster)
 

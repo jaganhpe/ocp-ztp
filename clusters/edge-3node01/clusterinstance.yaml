@@ -1,0 +1,259 @@
+apiVersion: siteconfig.open-cluster-management.io/v1alpha1
+kind: ClusterInstance
+
+metadata:
+  name: edge-3node01
+  namespace: edge-3node01
+
+spec:
+  clusterName: edge-3node01
+
+  baseDomain: ocp.local
+
+  pullSecretRef:
+    name: assisted-deployment-pull-secret
+
+  clusterImageSetNameRef: img4.22.11-x86-64-appsub
+
+  templateRefs:
+    - name: ai-cluster-templates-v1
+      namespace: open-cluster-management
+
+  sshPublicKey: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEPFTI/XcJpZCzE4XTLM+8/9rYrTVF1bQ7kYqiK1+r4h root@hvm1"
+
+  # 3-node compact cluster: all 3 nodes are masters and also run workloads (no dedicated workers)
+  clusterType: HighlyAvailable
+
+  networkType: OVNKubernetes
+
+  # machineNetwork must match the VLAN 101 subnet, since that's where the nodes are reachable
+  machineNetwork:
+    - cidr: 172.28.0.0/24
+
+  clusterNetwork:
+    - cidr: 10.128.0.0/14
+      hostPrefix: 23
+
+  serviceNetwork:
+    - cidr: 172.30.0.0/16
+
+  nodes:
+    - hostName: edge-3node01-1.ocp.local
+
+      role: master
+
+      templateRefs:
+        - name: ai-node-templates-v1
+          namespace: open-cluster-management
+
+      bmcAddress: "redfish-virtualmedia+https://172.28.0.26/redfish/v1/Systems/1"
+
+      bmcCredentialsName:
+        name: edge-3node01-1-bmc-secret
+
+      bootMACAddress: "a0:88:c2:4e:72:b6"
+
+      bootMode: UEFI
+
+      nodeNetwork:
+        interfaces:
+          - name: eno1
+            macAddress: "a0:88:c2:4e:72:b6"
+          - name: eno2
+            macAddress: "a0:88:c2:4e:72:b7"
+
+        config:
+          interfaces:
+            - name: bond0
+              type: bond
+              state: up
+              link-aggregation:
+                mode: active-backup
+                options:
+                  miimon: "140"
+                port:
+                  - eno1
+                  - eno2
+              # no IP here — bond0 is just the L2 trunk carrying VLAN 101
+
+            - name: eno1
+              type: ethernet
+              state: up
+
+            - name: eno2
+              type: ethernet
+              state: up
+
+            - name: bond0.101
+              type: vlan
+              state: up
+              vlan:
+                base-iface: bond0
+                id: 101
+
+              ipv4:
+                enabled: true
+                dhcp: false
+                address:
+                  - ip: 172.28.0.44
+                    prefix-length: 24
+
+              ipv6:
+                enabled: false
+
+          routes:
+            config:
+              - destination: 0.0.0.0/0
+                next-hop-address: 172.28.0.1
+                next-hop-interface: bond0.101
+
+          dns-resolver:
+            config:
+              server:
+                - 172.28.0.2
+
+    - hostName: edge-3node01-2.ocp.local
+
+      role: master
+
+      templateRefs:
+        - name: ai-node-templates-v1
+          namespace: open-cluster-management
+
+      bmcAddress: "redfish-virtualmedia+https://172.28.0.27/redfish/v1/Systems/1"
+
+      bmcCredentialsName:
+        name: edge-3node01-2-bmc-secret
+
+      bootMACAddress: "94:6d:ae:75:f3:24"
+
+      bootMode: UEFI
+
+      nodeNetwork:
+        interfaces:
+          - name: eno1
+            macAddress: "94:6d:ae:75:f3:24"
+          - name: eno2
+            macAddress: "94:6d:ae:75:f3:25"
+
+        config:
+          interfaces:
+            - name: bond0
+              type: bond
+              state: up
+              link-aggregation:
+                mode: active-backup
+                options:
+                  miimon: "140"
+                port:
+                  - eno1
+                  - eno2
+
+            - name: eno1
+              type: ethernet
+              state: up
+
+            - name: eno2
+              type: ethernet
+              state: up
+
+            - name: bond0.101
+              type: vlan
+              state: up
+              vlan:
+                base-iface: bond0
+                id: 101
+
+              ipv4:
+                enabled: true
+                dhcp: false
+                address:
+                  - ip: 172.28.0.45
+                    prefix-length: 24
+
+              ipv6:
+                enabled: false
+
+          routes:
+            config:
+              - destination: 0.0.0.0/0
+                next-hop-address: 172.28.0.1
+                next-hop-interface: bond0.101
+
+          dns-resolver:
+            config:
+              server:
+                - 172.28.0.2
+
+    - hostName: edge-3node01-3.ocp.local
+
+      role: master
+
+      templateRefs:
+        - name: ai-node-templates-v1
+          namespace: open-cluster-management
+
+      bmcAddress: "redfish-virtualmedia+https://172.28.0.28/redfish/v1/Systems/1"
+
+      bmcCredentialsName:
+        name: edge-3node01-3-bmc-secret
+
+      bootMACAddress: "a0:88:c2:4e:72:bc"
+
+      bootMode: UEFI
+
+      nodeNetwork:
+        interfaces:
+          - name: eno1
+            macAddress: "a0:88:c2:4e:72:bc"
+          - name: eno2
+            macAddress: "a0:88:c2:4e:72:bd"
+
+        config:
+          interfaces:
+            - name: bond0
+              type: bond
+              state: up
+              link-aggregation:
+                mode: active-backup
+                options:
+                  miimon: "140"
+                port:
+                  - eno1
+                  - eno2
+
+            - name: eno1
+              type: ethernet
+              state: up
+
+            - name: eno2
+              type: ethernet
+              state: up
+
+            - name: bond0.101
+              type: vlan
+              state: up
+              vlan:
+                base-iface: bond0
+                id: 101
+
+              ipv4:
+                enabled: true
+                dhcp: false
+                address:
+                  - ip: 172.28.0.46
+                    prefix-length: 24
+
+              ipv6:
+                enabled: false
+
+          routes:
+            config:
+              - destination: 0.0.0.0/0
+                next-hop-address: 172.28.0.1
+                next-hop-interface: bond0.101
+
+          dns-resolver:
+            config:
+              server:
+                - 172.28.0.2
