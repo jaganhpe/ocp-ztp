@@ -30,6 +30,12 @@ spec:
   machineNetwork:
     - cidr: 172.28.0.0/24
 
+  # keepalived/haproxy on the masters own these VIPs — point DNS api/apps records here, not at node IPs
+  apiVIPs:
+    - 172.28.0.47
+  ingressVIPs:
+    - 172.28.0.48
+
   clusterNetwork:
     - cidr: 10.128.0.0/14
       hostPrefix: 23
